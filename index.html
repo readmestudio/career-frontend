@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 경력기술서 생성기</title>
+</head>
+<body>
+<h2>AI 경력기술서 생성기</h2>
+<div id="experiences"></div>
+<button id="add">경험 추가하기</button>
+<button id="submit">경력기술서 생성</button>
+<pre id="result"></pre>
+
+<script>
+let container = document.getElementById("experiences");
+
+function addExp(){
+  let box=document.createElement("div");
+  box.innerHTML=`
+    <h3>경험</h3>
+    <input placeholder="경험 제목" class="title">
+    <textarea placeholder="문제" class="problem"></textarea>
+    <textarea placeholder="나의 역할" class="role"></textarea>
+    <textarea placeholder="전략" class="strategy"></textarea>
+    <textarea placeholder="액션" class="action"></textarea>
+    <textarea placeholder="결과" class="result"></textarea>
+    <hr>
+  `;
+  container.appendChild(box);
+}
+document.getElementById("add").onclick=addExp;
+addExp();
+
+document.getElementById("submit").onclick= async ()=>{
+  let exps=[...document.querySelectorAll("#experiences > div")].map(box=>({
+    title: box.querySelector(".title").value,
+    problem: box.querySelector(".problem").value,
+    role: box.querySelector(".role").value,
+    strategy: box.querySelector(".strategy").value,
+    action: box.querySelector(".action").value,
+    result: box.querySelector(".result").value,
+  }));
+
+  let res = await fetch("https://career-backend-dpui.onrender.com/generate",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({experiences: exps})
+  });
+  let data = await res.json();
+  document.getElementById("result").textContent = data.output;
+};
+</script>
+</body>
+</html>
