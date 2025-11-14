@@ -1,33 +1,19 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>AI 경력기술서 생성기</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
-        input, textarea { width: 100%; margin-bottom: 8px; padding: 6px; }
-        button { padding: 10px 15px; margin-right: 10px; cursor: pointer; }
-        #result { white-space: pre-wrap; background: #f7f7f7; padding: 15px; margin-top: 20px; border-radius: 6px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>AI 경력기술서 생성기</title>
 </head>
 <body>
-
 <h2>AI 경력기술서 생성기</h2>
-
 <div id="experiences"></div>
-
 <button id="add">경험 추가하기</button>
 <button id="submit">경력기술서 생성</button>
-
-<div id="result"></div>
+<pre id="result"></pre>
 
 <script>
-// 🔥 백엔드 URL (절대 수정 필요 없음)
-const API_URL = "https://career-backend-1-mkok.onrender.com/generate";
-
 let container = document.getElementById("experiences");
 
-// 경험 입력 박스 추가
 function addExp() {
   let box = document.createElement("div");
   box.innerHTML = `
@@ -44,14 +30,11 @@ function addExp() {
 }
 
 document.getElementById("add").onclick = addExp;
-addExp(); // 첫 박스 기본 생성
+addExp();
 
-// 경력기술서 생성 버튼 클릭
 document.getElementById("submit").onclick = async () => {
-  document.getElementById("result").textContent = "⏳ AI가 분석 중입니다...";
-
-  const exps = [...document.querySelectorAll("#experiences > div")].map(box => ({
-    title: box.querySelector(".title").value,
+  let exps = [...document.querySelectorAll("#experiences > div")].map(box => ({
+    experienceTitle: box.querySelector(".title").value,
     problem: box.querySelector(".problem").value,
     role: box.querySelector(".role").value,
     strategy: box.querySelector(".strategy").value,
@@ -59,27 +42,22 @@ document.getElementById("submit").onclick = async () => {
     result: box.querySelector(".result").value,
   }));
 
+  let resultElement = document.getElementById("result");
+  resultElement.textContent = "⏳ 서버 깨우는 중... (최대 20~40초)";
+
   try {
-    const res = await fetch(API_URL, {
+    let res = await fetch("https://career-backend-1-mkok.onrender.com/generate", {
       method:"POST",
-      headers: {"Content-Type":"application/json"},
+      headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ experiences: exps })
     });
 
-    if (!res.ok) {
-      throw new Error("서버 응답 오류: " + res.status);
-    }
-
-    const data = await res.json();
-    document.getElementById("result").textContent =
-      "🎉 경력기술서 생성 완료!\n\n" + JSON.stringify(data, null, 2);
-
+    let data = await res.json();
+    resultElement.textContent = JSON.stringify(data, null, 2);
   } catch (err) {
-    document.getElementById("result").textContent =
-      "❌ 서버 오류: " + err.message + "\n\n백엔드를 다시 확인하세요.";
+    resultElement.textContent = "❌ 서버 오류: " + err;
   }
 };
 </script>
-
 </body>
 </html>
