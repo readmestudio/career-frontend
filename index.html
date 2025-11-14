@@ -9,7 +9,7 @@
 <div id="experiences"></div>
 <button id="add">경험 추가하기</button>
 <button id="submit">경력기술서 생성</button>
-<pre id="result"></pre>
+<pre id="resultBox" style="white-space: pre-wrap;"></pre>
 
 <script>
 let container = document.getElementById("experiences");
@@ -23,7 +23,7 @@ function addExp(){
     <textarea placeholder="나의 역할" class="role"></textarea>
     <textarea placeholder="전략" class="strategy"></textarea>
     <textarea placeholder="액션" class="action"></textarea>
-    <textarea placeholder="결과" class="result"></textarea>
+    <textarea placeholder="결과" class="resultField"></textarea>
     <hr>
   `;
   container.appendChild(box);
@@ -38,7 +38,7 @@ document.getElementById("submit").onclick= async ()=>{
     role: box.querySelector(".role").value,
     strategy: box.querySelector(".strategy").value,
     action: box.querySelector(".action").value,
-    result: box.querySelector(".result").value,
+    result: box.querySelector(".resultField").value,
   }));
 
   let res = await fetch("https://career-backend-dpui.onrender.com/generate",{
@@ -47,7 +47,7 @@ document.getElementById("submit").onclick= async ()=>{
     body:JSON.stringify({experiences: exps})
   });
   let data = await res.json();
-  document.getElementById("result").textContent = data.output;
+  document.getElementById("resultBox").textContent = data.output;
 };
 </script>
 </body>
