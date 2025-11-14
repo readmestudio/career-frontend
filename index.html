@@ -1,85 +1,137 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 경력기술서 생성기</title>
+    <style>
+        body {
+            font-family: Pretendard, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            padding: 40px;
+            background: #fafafa;
+        }
+        h2 { font-size: 24px; margin-bottom: 20px; }
 
-dotenv.config();
+        .exp-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #bbb;
+            margin: 8px 0 16px;
+            font-size: 15px;
+            resize: vertical;
+        }
+        button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #4A90E2;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        #resultBox {
+            white-space: pre-wrap;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            margin-top: 30px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+<h2>AI 경력기술서 생성기</h2>
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+<div id="experiences"></div>
 
-// ============================
-// 🔥 핵심 API 엔드포인트
-// ============================
-app.post("/generate", async (req, res) => {
-  const { experiences } = req.body;
+<button id="addExpBtn">경험 추가하기</button>
+<button id="generateBtn">경력기술서 생성</button>
 
-  if (!experiences) {
-    return res.status(400).json({ error: "experiences is required" });
-  }
+<div id="resultBox"></div>
 
-  const prompt = `
-너는 ‘경력기술서 자동 생성 엔진’이다.
-
-사용자가 제공한 경험은 불완전할 수 있다. 일부 필드는 공란일 수 있다.
-공란이 있을 경우 반드시 아래 규칙대로 자연스럽게 보완하라.
-
-[필수 경험 구조]
-1. 경험 제목 (experienceTitle)
-2. 문제 (problem)
-3. 나의 역할 (role)
-4. 전략 (strategy)
-5. 액션(한 일) (action)
-6. 결과 (result)
-
-[보완 규칙]
-- problem 이 비어 있으면 experienceTitle 기반으로 자연스럽게 생성한다.
-- role 이 비어 있으면 문제와 맥락을 고려해 적절히 추론한다.
-- strategy 가 비어 있으면 문제 해결을 위한 전략을 자동 생성한다.
-- action 이 비어 있으면 전략을 실행하기 위한 구체적 행동을 자동으로 만든다.
-- result 가 비어 있으면 현실적인 정량·정성 결과로 자연스럽게 작성한다.
-
-[출력 형식]
-코드 블록 없이 JSON만 출력하라:
-
-{
-  "structured": [
-    {
-      "experienceTitle": "",
-      "problem": "",
-      "role": "",
-      "strategy": "",
-      "action": "",
-      "result": ""
-    }
-  ],
-  "narrative": "여기에 서술형 경력기술서"
+<script>
+function createExperienceBox() {
+    const box = document.createElement("div");
+    box.className = "exp-box";
+    box.innerHTML = `
+        <h3>경험</h3>
+        <input placeholder="경험 제목" class="title">
+        <textarea placeholder="문제" class="problem"></textarea>
+        <textarea placeholder="나의 역할" class="role"></textarea>
+        <textarea placeholder="전략" class="strategy"></textarea>
+        <textarea placeholder="액션(한 일)" class="action"></textarea>
+        <textarea placeholder="결과" class="resultField"></textarea>
+    `;
+    return box;
 }
 
-입력 데이터:
-${JSON.stringify(experiences, null, 2)}
-`;
+// -------------------------------------------------------------
+// UI 세팅
+// -------------------------------------------------------------
+const expContainer = document.getElementById("experiences");
+const addExpBtn = document.getElementById("addExpBtn");
+const generateBtn = document.getElementById("generateBtn");
+const resultBox = document.getElementById("resultBox");
 
-  try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    const json = JSON.parse(text);
+// 첫 번째 경험 박스 자동 생성
+expContainer.appendChild(createExperienceBox());
 
-    return res.json(json);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "AI Error", detail: err.toString() });
-  }
-});
+// 경험 추가하기 버튼 클릭
+addExpBtn.onclick = () => {
+    expContainer.appendChild(createExperienceBox());
+};
 
-// ============================
-// 서버 실행
-// ============================
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log("Server running on port " + port);
-});
+// -------------------------------------------------------------
+// 경력기술서 생성
+// -------------------------------------------------------------
+generateBtn.onclick = async () => {
+    const experienceBoxes = document.querySelectorAll(".exp-box");
+
+    const experiences = [...experienceBoxes].map(box => ({
+        experienceTitle: box.querySelector(".title").value,
+        problem: box.querySelector(".problem").value,
+        role: box.querySelector(".role").value,
+        strategy: box.querySelector(".strategy").value,
+        action: box.querySelector(".action").value,
+        result: box.querySelector(".resultField").value
+    }));
+
+    resultBox.textContent = "AI가 경력기술서를 생성 중입니다... 잠시만 기다려주세요 🙌";
+
+    try {
+        const response = await fetch("https://career-backend-dpui.onrender.com/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ experiences })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            resultBox.textContent = "⚠️ 오류 발생: " + data.error;
+            return;
+        }
+
+        // narrative 출력
+        resultBox.textContent = data.narrative;
+
+    } catch (err) {
+        resultBox.textContent = "❌ 서버 오류: " + err.toString();
+    }
+};
+</script>
+
+</body>
+</html>
